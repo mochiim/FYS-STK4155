@@ -1,36 +1,14 @@
 import numpy as np
-import matplotlib.pyplot as plt 
-
-# design matrix
-X = np.zeros((3,3))
-X[:,0] = np.array([1, 0, 0])
-X[:,1] = np.array([0, 1, 0])
-X[:,2] = np.array([0, 0, 1])
-
-# identity matrix
-I = np.identity(3)
-
-def MSE(y_data,y_model):
-    n = np.size(y_model)
-    return np.sum((y_data-y_model)**2)/n
-
-print(MSE(X, I))
-
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
-from matplotlib.ticker import LinearLocator, FormatStrFormatter
-import numpy as np
-from random import random, seed
+from sklearn.preprocessing import PolynomialFeatures
+from sklearn.linear_model import Ridge, LinearRegression, Lasso, Ridge
+from sklearn.model_selection import cross_validate
 
-fig = plt.figure()
-ax = fig.gca(projection='3d')
+np.random.seed(4155)
 
-# Make data.
-x = np.arange(0, 1, 0.05)
-y = np.arange(0, 1, 0.05)
-x, y = np.meshgrid(x,y)
-
+### a)
 
 def FrankeFunction(x,y):
     term1 = 0.75*np.exp(-(0.25*(9*x-2)**2) - 0.25*((9*y-2)**2))
@@ -39,20 +17,52 @@ def FrankeFunction(x,y):
     term4 = -0.2*np.exp(-(9*x-4)**2 - (9*y-7)**2)
     return term1 + term2 + term3 + term4
 
+# Generate the data
+nrow = 100
+ncol = 200
+ax_row = np.random.uniform(0, 1, size=nrow)
+ax_col = np.random.uniform(0, 1, size=ncol)
 
-z = FrankeFunction(x, y)
+ind_sort_row = np.argsort(ax_row)
+ind_sort_col = np.argsort(ax_col)
 
-# Plot the surface.
-surf = ax.plot_surface(x, y, z, cmap=cm.coolwarm,
-                       linewidth=0, antialiased=False)
+ax_row_sorted = ax_row[ind_sort_row]
+ax_col_sorted = ax_col[ind_sort_col]
 
-# Customize the z axis.
-ax.set_zlim(-0.10, 1.40)
-ax.zaxis.set_major_locator(LinearLocator(10))
-ax.zaxis.set_major_formatter(FormatStrFormatter('%.02f'))
+colmat, rowmat = np.meshgrid(ax_col_sorted, ax_row_sorted)
 
-# Add a color bar which maps values to colors.
+noise_str = .0
+noise = np.random.randn(nrow, ncol)
+
+z = FrankeFunction(rowmat, colmat) + noise_str * noise
+
+row_arr = rowmat.ravel()
+col_arr = colmat.ravel()
+z_arr = z.ravel()
+
+# Generate the design matrix
+p = 10
+poly = PolynomialFeatures(degree = p)
+X = poly.fit_transform(np.c_[row_arr, col_arr])
+
+## Perform OLS
+linreg = LinearRegression()
+linreg.fit(X, z_arr)
+
+zpred = linreg.predict(X)
+zplot = zpred.reshape(nrow, ncol)
+
+# Plot the reuslting fit beside the original surface
+fig = plt.figure()
+
+ax = fig.add_subplot(1, 2, 1, projection='3d')
+surf = ax.plot_surface(colmat, rowmat, z, cmap=cm.viridis, linewidth=0, antialiased=False)
 fig.colorbar(surf, shrink=0.5, aspect=5)
+plt.title('Franke')
 
-#plt.show()
-print(np.arange(0, 1, 0.05))
+ax = fig.add_subplot(1, 2, 2, projection='3d')
+surf = ax.plot_surface(colmat, rowmat, zplot, cmap=cm.viridis, linewidth=0, antialiased=False)
+fig.colorbar(surf, shrink=0.5, aspect=5)
+plt.title('Fitted Franke')
+
+plt.show()
