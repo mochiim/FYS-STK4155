@@ -76,3 +76,5 @@ plt.xlabel('log10(lambda)')
 plt.ylabel('MSE')
 plt.legend()
 plt.show()
+
+print('hello')
