@@ -71,3 +71,4 @@ r2_train = np.zeros(len(polynomial_orders))
     y = np.arange(0, 1, 0.05)
     X, Y = np.meshgrid(x,y)                                 
     z = FrankeFunction(X, Y, noise = True)
+
